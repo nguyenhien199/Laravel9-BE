@@ -1,0 +1,46 @@
+{
+    "name": "universe/laravel-timezone",
+    "license": "MIT",
+    "description": "Timezone storage and retrieval for Laravel",
+    "keywords": ["laravel", "timezone"],
+    "version": "1.1.0",
+    "authors": [
+        {
+            "name": "ThuyVu",
+            "email": "thuyvv.hn@gmail.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^8.0",
+        "laravel/framework": "^9|^10",
+        "torann/geoip": "^3.0",
+        "nesbot/carbon": "^2.72|^3.0",
+        "universe/laravel-package-tools": "^1.0"
+    },
+    "require-dev": {},
+    "autoload": {
+        "psr-4": {
+            "Universe\\Timezone\\": "src/"
+        }
+    },
+    "autoload-dev": {},
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Universe\\Timezone\\TimezoneServiceProvider"
+            ]
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {}
+    },
+    "scripts": {
+        "pre-package-install": [
+            "@php artisan config:clear"
+        ]
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

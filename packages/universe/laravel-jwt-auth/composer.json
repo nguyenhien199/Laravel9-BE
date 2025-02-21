@@ -1,0 +1,45 @@
+{
+    "name": "universe/laravel-jwt-auth",
+    "description": "JSON Web Token Authentication for Laravel",
+    "keywords": ["auth", "authentication", "json web token", "jwt", "laravel"],
+    "homepage": "https://github.com/tymondesigns/jwt-auth",
+    "license": "MIT",
+    "version": "1.0.0",
+    "authors": [
+        {
+            "name": "ThuyVu",
+            "email": "thuyvv.hn@gmail.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^8.0",
+        "tymon/jwt-auth": "^2.1",
+        "universe/laravel-package-tools": "^1.0"
+    },
+    "require-dev": {},
+    "autoload": {
+        "psr-4": {
+            "Universe\\JWTAuth\\": "src/"
+        }
+    },
+    "autoload-dev": {},
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Universe\\JWTAuth\\JWTAuthServiceProvider"
+            ]
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {}
+    },
+    "scripts": {
+        "pre-package-install": [
+            "@php artisan config:clear"
+        ]
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

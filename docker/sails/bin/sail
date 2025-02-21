@@ -1,0 +1,651 @@
+#!/usr/bin/env bash
+
+# Base dirname.
+PWD_HERE=$(dirname -- "$0")
+PWD_ROOT=$(realpath "${PWD_HERE}/../../..")
+
+## DEFAULT DATA DEFINITION #################################
+# ENV_FILE: default .env path.
+ENV_FILE="${ENV_FILE:-.env}"
+ENV_FILE="${PWD_ROOT}/${ENV_FILE}"
+# SAIL_FILE: default docker-compose file path.
+SAIL_FILE="docker/development/docker-compose.yml"
+
+# Base-Image
+BASE_SHORT="/docker/base"
+BASE_DOCKER_PWD="${PWD_ROOT}${BASE_SHORT}"
+BASE_ENV_FILE="${BASE_DOCKER_PWD}/.env"
+## END: DEFAULT DATA DEFINITION ############################
+
+## FUNCTION DEFINITION #####################################
+## First definition function.
+# Usage: initial;
+function initial() {
+  # Determine if stdout is a terminal...
+  if [[ -t 1 ]]; then
+    # Determine if colors are supported...
+    COLORS=$(tput colors)
+    if [[ -n "${COLORS}" ]] && [[ "${COLORS}" -ge 8 ]]; then
+      # https://linuxcommand.org/lc3_adv_tput.php
+      BLACK="$(tput setaf 0)"
+      RED="$(tput setaf 1)"
+      GREEN="$(tput setaf 2)"
+      YELLOW="$(tput setaf 3)"
+      BLUE="$(tput setaf 4)"
+      MAGENTA="$(tput setaf 5)"
+      CYAN="$(tput setaf 6)"
+      WHITE="$(tput setaf 7)"
+      BOLD="$(tput bold)"
+      REVERSE="$(tput smso)"
+      UNDERLINE="$(tput smul)"
+      NC="$(tput sgr0)" # NORMAL COLOR
+    fi
+  fi
+}
+
+## Show Info message function.
+# Usage: display_info "Message to display";
+function display_info() {
+  echo
+  echo "  ${BLUE}[INFO] $@ ${NC}" >&1
+  echo
+}
+
+## Show Command function.
+# Usage: display_command "Command content to display";
+function display_command() {
+  echo "${RED}+ $@ ${NC}" >&1
+}
+
+## Show Error message function.
+# Usage: display_error "Error message to display";
+function display_error() {
+  echo
+  echo "  ${RED}[ERROR] $@ ${NC}" >&2
+  echo
+  exit 1
+}
+
+## Function that outputs Sail is not running.
+# Usage: sail_is_not_running;
+function sail_is_not_running {
+  echo
+  echo "  ${RED}[ERROR] Sail is not running.${NC}" >&2
+  echo
+  echo "  ${BOLD}You may Sail using the following commands:${NC} '/docker/sail up' or '/docker/sail up -d'" >&2
+  echo "  ${BOLD}If show errors 'Permission denied' following commands:${NC} 'chmod +x /docker/sail /docker/sails/bin/sail'" >&2
+  echo
+  exit 1
+}
+
+## Show Help function.
+# Usage: display_help;
+function display_help {
+  echo "Sail"
+  echo
+  echo "${YELLOW}Usage:${NC}"
+  echo "  sail COMMAND [options] [arguments]"
+  echo
+  echo "Unknown commands are passed to the docker-compose binary."
+  echo
+  echo "${YELLOW}docker-compose Commands:${NC}"
+  echo "  ${GREEN}sail up${NC}        Start the application"
+  echo "  ${GREEN}sail up -d${NC}     Start the application in the background"
+  echo "  ${GREEN}sail stop${NC}      Stop the application"
+  echo "  ${GREEN}sail restart${NC}   Restart the application"
+  echo "  ${GREEN}sail ps${NC}        Display the status of all containers"
+  echo
+  echo "${YELLOW}Artisan Commands:${NC}"
+  echo "  ${GREEN}sail artisan ...${NC}          Run an Artisan command"
+  echo "  ${GREEN}sail artisan queue:work${NC}"
+  echo
+  echo "${YELLOW}PHP Commands:${NC}"
+  echo "  ${GREEN}sail php ...${NC}   Run a snippet of PHP code"
+  echo "  ${GREEN}sail php -v${NC}"
+  echo
+  echo "${YELLOW}Composer Commands:${NC}"
+  echo "  ${GREEN}sail composer ...${NC}                       Run a Composer command"
+  echo "  ${GREEN}sail composer require laravel/sanctum${NC}"
+  echo
+  echo "${YELLOW}Node Commands:${NC}"
+  echo "  ${GREEN}sail node ...${NC}         Run a Node command"
+  echo "  ${GREEN}sail node --version${NC}"
+  echo
+  echo "${YELLOW}NPM Commands:${NC}"
+  echo "  ${GREEN}sail npm ...${NC}        Run a npm command"
+  echo "  ${GREEN}sail npx${NC}            Run a npx command"
+  echo "  ${GREEN}sail npm run prod${NC}"
+  echo
+  echo "${YELLOW}PNPM Commands:${NC}"
+  echo "  ${GREEN}sail pnpm ...${NC}        Run a pnpm command"
+  echo "  ${GREEN}sail pnpx${NC}            Run a pnpx command"
+  echo "  ${GREEN}sail pnpm run prod${NC}"
+  echo
+  echo "${YELLOW}Yarn Commands:${NC}"
+  echo "  ${GREEN}sail yarn ...${NC}        Run a Yarn command"
+  echo "  ${GREEN}sail yarn run prod${NC}"
+  echo
+  echo "${YELLOW}Bun Commands:${NC}"
+  echo "  ${GREEN}sail bun ...${NC}        Run a bun command"
+  echo "  ${GREEN}sail bunx${NC}           Run a bunx command"
+  echo "  ${GREEN}sail bun run prod${NC}"
+  echo
+  echo "${YELLOW}Database Commands:${NC}"
+  echo "  ${GREEN}sail mysql${NC}     Start a MySQL CLI session within the 'mysql' container"
+  echo "  ${GREEN}sail mariadb${NC}   Start a MySQL CLI session within the 'mariadb' container"
+  echo "  ${GREEN}sail psql${NC}      Start a PostgreSQL CLI session within the 'pgsql' container"
+  echo "  ${GREEN}sail redis${NC}     Start a Redis CLI session within the 'redis' container"
+  echo
+  echo "${YELLOW}Debugging:${NC}"
+  echo "  ${GREEN}sail debug ...${NC}          Run an Artisan command in debug mode"
+  echo "  ${GREEN}sail debug queue:work${NC}"
+  echo
+  echo "${YELLOW}Running Tests:${NC}"
+  echo "  ${GREEN}sail test${NC}          Run the PHPUnit tests via the Artisan test command"
+  echo "  ${GREEN}sail phpunit ...${NC}   Run PHPUnit"
+  echo "  ${GREEN}sail pest ...${NC}      Run Pest"
+  echo "  ${GREEN}sail pint ...${NC}      Run Pint"
+  echo "  ${GREEN}sail dusk${NC}          Run the Dusk tests (Requires the laravel/dusk package)"
+  echo "  ${GREEN}sail dusk:fails${NC}    Re-run previously failed Dusk tests (Requires the laravel/dusk package)"
+  echo
+  echo "${YELLOW}Container CLI:${NC}"
+  echo "  ${GREEN}sail shell${NC}        Start a shell session within the application container"
+  echo "  ${GREEN}sail bash${NC}         Alias for 'sail shell'"
+  echo "  ${GREEN}sail root-shell${NC}   Start a root shell session within the application container"
+  echo "  ${GREEN}sail root-bash${NC}    Alias for 'sail root-shell'"
+  echo "  ${GREEN}sail tinker${NC}       Start a new Laravel Tinker session"
+  echo
+  echo "${YELLOW}Sharing:${NC}"
+  echo "  ${GREEN}sail share${NC}   Share the application publicly via a temporary URL"
+  echo "  ${GREEN}sail open${NC}    Open the site in your browser"
+  echo
+  echo "${YELLOW}Binaries:${NC}"
+  echo "  ${GREEN}sail bin ...${NC}   Run Composer binary scripts from the vendor/bin directory"
+  echo
+  echo "${YELLOW}Customization:${NC}"
+  echo "  ${GREEN}sail artisan sail:publish${NC}   Publish the Sail configuration files"
+  echo "  ${GREEN}sail build --no-cache${NC}       Rebuild all of the Sail containers"
+  echo
+  exit 1
+}
+
+## BEGIN #######################################################################
+initial
+
+# Verify operating system is supported...
+UNAMEOUT="$(uname -s)"
+case "${UNAMEOUT}" in
+  Linux*)  MACHINE=linux;;
+  Darwin*) MACHINE=mac;;
+  *)       MACHINE="UNKNOWN"
+esac
+if [[ "${MACHINE}" == "UNKNOWN" ]]; then
+  display_error "Unsupported operating system [${UNAMEOUT}]. Sail supports macOS, Linux, and Windows (WSL2)!"
+fi
+
+# Proxy the "help" command...
+if [[ $# -gt 0 ]]; then
+  if [[ "$1" == "help" ]] || [[ "$1" == "-h" ]] || [[ "$1" == "-help" ]] || [[ "$1" == "--help" ]]; then
+    display_help
+  fi
+else
+  display_help
+fi
+
+# Source the `.env` file so Project environment variables are available...
+if [[ -z "${ENV_FILE}" ]] || [[ ! -f "${ENV_FILE}" ]]; then
+  display_error "Unable to find '.env' file: '${ENV_FILE//${PWD_ROOT}/}'!"
+fi
+set -o allexport
+source "${ENV_FILE}"
+set +o allexport
+
+# Define environment variables...
+export BASE_IMAGE_NAME=${BASE_IMAGE_NAME:-''}
+export SAIL_USER=${SAIL_USER:-'www-data'}
+export SAIL_GROUP=${SAIL_GROUP:-'www-data'}
+
+export APP_PORT=${APP_PORT:-80}
+export APP_SERVICE=${APP_SERVICE:-'app'}
+export DB_PORT=${DB_PORT:-3306}
+export WWWUSER=${WWWUSER:-${UID}}
+export WWWGROUP=${WWWGROUP:-$(id -g)}
+
+export SAIL_FILES=${SAIL_FILES:-${SAIL_FILE}}
+export SAIL_SHARE_DASHBOARD=${SAIL_SHARE_DASHBOARD:-4040}
+export SAIL_SHARE_SERVER_HOST=${SAIL_SHARE_SERVER_HOST:-'site'}
+export SAIL_SHARE_SERVER_PORT=${SAIL_SHARE_SERVER_PORT:-8080}
+export SAIL_SHARE_SUBDOMAIN=${SAIL_SHARE_SUBDOMAIN:-''}
+export SAIL_SHARE_DOMAIN=${SAIL_SHARE_DOMAIN:-${SAIL_SHARE_SERVER_HOST}}
+export SAIL_SHARE_SERVER=${SAIL_SHARE_SERVER:-''}
+
+# Define Docker Compose command prefix...
+if docker compose &> /dev/null; then
+  DOCKER_COMPOSE=(docker compose)
+else
+  DOCKER_COMPOSE=(docker-compose)
+fi
+
+# Check Sail Compose file exists...
+if [[ -n "${SAIL_FILES}" ]]; then
+  # Convert SAIL_FILES to an array...
+  IFS=':' read -ra SAIL_FILES <<< "${SAIL_FILES}"
+
+  for FILE in "${SAIL_FILES[@]}"; do
+    FILE="${PWD_ROOT}/${FILE}"
+    if [[ ! -f "${FILE}" ]]; then
+      display_error "Unable to find Docker Compose file: '${FILE//${PWD_ROOT}/}'!"
+    fi
+    DOCKER_COMPOSE+=(--file "${FILE}")
+  done
+fi
+
+EXEC="yes"
+
+if [[ -z "${SAIL_SKIP_CHECKS}" ]]; then
+  # Ensure that Docker is running...
+  if ! docker info > /dev/null 2>&1; then
+    display_error "Docker is not running!"
+  fi
+
+  # Determine if Sail is currently up...
+  if "${DOCKER_COMPOSE[@]}" ps "${APP_SERVICE}" 2>&1 | grep 'Exit\|exited'; then
+    display_info "Shutting down old Sail processes..."
+
+    display_command "${DOCKER_COMPOSE[@]} down > /dev/null"
+    "${DOCKER_COMPOSE[@]}" down > /dev/null 2>&1
+
+    EXEC="no"
+  elif [[ -z "$("${DOCKER_COMPOSE[@]}" ps -q)" ]]; then
+    EXEC="no"
+  fi
+fi
+
+ARGS=()
+
+# Proxy PHP commands to the "php" binary on the application container...
+if [[ "$1" == "php" ]]; then
+  [[ "${EXEC}" != "yes" ]] && sail_is_not_running
+
+  shift 1
+  ARGS+=(exec -u "${SAIL_USER}")
+  [[ ! -t 0 ]] && ARGS+=(-T)
+  ARGS+=("${APP_SERVICE}" php)
+
+# Proxy vendor binary commands on the application container...
+elif [[ "$1" == "bin" ]]; then
+  [[ "${EXEC}" != "yes" ]] && sail_is_not_running
+
+  shift 1
+  CMD=$1
+  shift 1
+  ARGS+=(exec -u "${SAIL_USER}")
+  [[ ! -t 0 ]] && ARGS+=(-T)
+  ARGS+=("${APP_SERVICE}" ./vendor/bin/"${CMD}")
+
+# Proxy docker-compose commands to the docker-compose binary on the application container...
+elif [[ "$1" == "docker-compose" ]]; then
+  [[ "${EXEC}" != "yes" ]] && sail_is_not_running
+
+  shift 1
+  ARGS+=(exec -u "${SAIL_USER}")
+  [[ ! -t 0 ]] && ARGS+=(-T)
+  ARGS+=("${APP_SERVICE}" "${DOCKER_COMPOSE[@]}")
+
+# Proxy Composer commands to the "composer" binary on the application container...
+elif [[ "$1" == "composer" ]]; then
+  [[ "${EXEC}" != "yes" ]] && sail_is_not_running
+
+  shift 1
+  ARGS+=(exec -u "${SAIL_USER}")
+  [[ ! -t 0 ]] && ARGS+=(-T)
+  ARGS+=("${APP_SERVICE}" composer)
+
+# Proxy Artisan commands to the "artisan" binary on the application container...
+elif [[ "$1" == "artisan" ]] || [[ "$1" == "art" ]] || [[ "$1" == "a" ]]; then
+  [[ "${EXEC}" != "yes" ]] && sail_is_not_running
+
+  shift 1
+  ARGS+=(exec -u "${SAIL_USER}")
+  [[ ! -t 0 ]] && ARGS+=(-T)
+  ARGS+=("${APP_SERVICE}" php artisan)
+
+# Proxy the "debug" command to the "php artisan" binary on the application container with xdebug enabled...
+elif [[ "$1" == "debug" ]]; then
+  [[ "${EXEC}" != "yes" ]] && sail_is_not_running
+
+  shift 1
+  ARGS+=(exec -u "${SAIL_USER}" -e XDEBUG_TRIGGER=1)
+  [[ ! -t 0 ]] && ARGS+=(-T)
+  ARGS+=("${APP_SERVICE}" php artisan)
+
+# Proxy the "test" command to the "php artisan test" Artisan command...
+elif [[ "$1" == "test" ]]; then
+  [[ "${EXEC}" != "yes" ]] && sail_is_not_running
+
+  shift 1
+  ARGS+=(exec -u "${SAIL_USER}")
+  [[ ! -t 0 ]] && ARGS+=(-T)
+  ARGS+=("${APP_SERVICE}" php artisan test)
+
+# Proxy the "phpunit" command to "php vendor/bin/phpunit"...
+elif [[ "$1" == "phpunit" ]]; then
+  [[ "${EXEC}" != "yes" ]] && sail_is_not_running
+
+  shift 1
+  ARGS+=(exec -u "${SAIL_USER}")
+  [[ ! -t 0 ]] && ARGS+=(-T)
+  ARGS+=("${APP_SERVICE}" php vendor/bin/phpunit)
+
+# Proxy the "pest" command to "php vendor/bin/pest"...
+elif [[ "$1" == "pest" ]]; then
+  [[ "${EXEC}" != "yes" ]] && sail_is_not_running
+
+  shift 1
+  ARGS+=(exec -u "${SAIL_USER}")
+  [[ ! -t 0 ]] && ARGS+=(-T)
+  ARGS+=("${APP_SERVICE}" php vendor/bin/pest)
+
+# Proxy the "pint" command to "php vendor/bin/pint"...
+elif [[ "$1" == "pint" ]]; then
+  [[ "${EXEC}" != "yes" ]] && sail_is_not_running
+
+  shift 1
+  ARGS+=(exec -u "${SAIL_USER}")
+  [[ ! -t 0 ]] && ARGS+=(-T)
+  ARGS+=("${APP_SERVICE}" php vendor/bin/pint)
+
+# Proxy the "dusk" command to the "php artisan dusk" Artisan command...
+elif [[ "$1" == "dusk" ]]; then
+  [[ "${EXEC}" != "yes" ]] && sail_is_not_running
+
+  shift 1
+  ARGS+=(exec -u "${SAIL_USER}")
+  [[ ! -t 0 ]] && ARGS+=(-T)
+  ARGS+=(-e "APP_URL=http://${APP_SERVICE}")
+  ARGS+=(-e "DUSK_DRIVER_URL=http://selenium:4444/wd/hub")
+  ARGS+=("${APP_SERVICE}" php artisan dusk)
+
+# Proxy the "dusk:fails" command to the "php artisan dusk:fails" Artisan command...
+elif [[ "$1" == "dusk:fails" ]]; then
+  [[ "${EXEC}" != "yes" ]] && sail_is_not_running
+
+  shift 1
+  ARGS+=(exec -u "${SAIL_USER}")
+  [[ ! -t 0 ]] && ARGS+=(-T)
+  ARGS+=(-e "APP_URL=http://${APP_SERVICE}")
+  ARGS+=(-e "DUSK_DRIVER_URL=http://selenium:4444/wd/hub")
+  ARGS+=("${APP_SERVICE}" php artisan dusk:fails)
+
+# Initiate a Laravel Tinker session within the application container...
+elif [[ "$1" == "tinker" ]]; then
+  [[ "${EXEC}" != "yes" ]] && sail_is_not_running
+
+  shift 1
+  ARGS+=(exec -u "${SAIL_USER}")
+  [[ ! -t 0 ]] && ARGS+=(-T)
+  ARGS+=("${APP_SERVICE}" php artisan tinker)
+
+# Proxy Node commands to the "node" binary on the application container...
+elif [[ "$1" == "node" ]]; then
+  [[ "${EXEC}" != "yes" ]] && sail_is_not_running
+
+  shift 1
+  ARGS+=(exec -u "${SAIL_USER}")
+  [[ ! -t 0 ]] && ARGS+=(-T)
+  ARGS+=("${APP_SERVICE}" node)
+
+# Proxy NPM commands to the "npm" binary on the application container...
+elif [[ "$1" == "npm" ]]; then
+  [[ "${EXEC}" != "yes" ]] && sail_is_not_running
+
+  shift 1
+  ARGS+=(exec -u "${SAIL_USER}")
+  [[ ! -t 0 ]] && ARGS+=(-T)
+  ARGS+=("${APP_SERVICE}" npm)
+
+# Proxy NPX commands to the "npx" binary on the application container...
+elif [[ "$1" == "npx" ]]; then
+  [[ "${EXEC}" != "yes" ]] && sail_is_not_running
+
+  shift 1
+  ARGS+=(exec -u "${SAIL_USER}")
+  [[ ! -t 0 ]] && ARGS+=(-T)
+  ARGS+=("${APP_SERVICE}" npx)
+
+# Proxy PNPM commands to the "pnpm" binary on the application container...
+elif [[ "$1" == "pnpm" ]]; then
+  [[ "${EXEC}" != "yes" ]] && sail_is_not_running
+
+  shift 1
+  ARGS+=(exec -u "${SAIL_USER}")
+  [[ ! -t 0 ]] && ARGS+=(-T)
+  ARGS+=("${APP_SERVICE}" pnpm)
+
+# Proxy PNPX commands to the "pnpx" binary on the application container...
+elif [[ "$1" == "pnpx" ]]; then
+  [[ "${EXEC}" != "yes" ]] && sail_is_not_running
+
+  shift 1
+  ARGS+=(exec -u "${SAIL_USER}")
+  [[ ! -t 0 ]] && ARGS+=(-T)
+  ARGS+=("${APP_SERVICE}" pnpx)
+
+# Proxy YARN commands to the "yarn" binary on the application container...
+elif [[ "$1" == "yarn" ]]; then
+  [[ "${EXEC}" != "yes" ]] && sail_is_not_running
+
+  shift 1
+  ARGS+=(exec -u "${SAIL_USER}")
+  [[ ! -t 0 ]] && ARGS+=(-T)
+  ARGS+=("${APP_SERVICE}" yarn)
+
+# Proxy Bun commands to the "bun" binary on the application container...
+elif [[ "$1" == "bun" ]]; then
+  [[ "${EXEC}" != "yes" ]] && sail_is_not_running
+
+  shift 1
+  ARGS+=(exec -u "${SAIL_USER}")
+  [[ ! -t 0 ]] && ARGS+=(-T)
+  ARGS+=("${APP_SERVICE}" bun)
+
+# Proxy Bun X commands to the "bunx" binary on the application container...
+elif [[ "$1" == "bunx" ]]; then
+  [[ "${EXEC}" != "yes" ]] && sail_is_not_running
+
+  shift 1
+  ARGS+=(exec -u "${SAIL_USER}")
+  [[ ! -t 0 ]] && ARGS+=(-T)
+  ARGS+=("${APP_SERVICE}" bunx)
+
+# Initiate a MySQL CLI terminal session within the "mysql" container...
+elif [[ "$1" == "mysql" ]]; then
+  [[ "${EXEC}" != "yes" ]] && sail_is_not_running
+
+  shift 1
+  ARGS+=(exec)
+  [[ ! -t 0 ]] && ARGS+=(-T)
+  ARGS+=(mysql bash -c)
+  ARGS+=("MYSQL_PWD=\${MYSQL_PASSWORD} mysql -u \${MYSQL_USER} \${MYSQL_DATABASE}")
+
+# Initiate a MySQL CLI terminal session within the "mariadb" container...
+elif [[ "$1" == "mariadb" ]]; then
+  [[ "${EXEC}" != "yes" ]] && sail_is_not_running
+
+  shift 1
+  ARGS+=(exec)
+  [[ ! -t 0 ]] && ARGS+=(-T)
+  ARGS+=(mariadb bash -c)
+  ARGS+=("MYSQL_PWD=\${MYSQL_PASSWORD} mariadb -u \${MYSQL_USER} \${MYSQL_DATABASE}")
+
+# Initiate a PostgreSQL CLI terminal session within the "pgsql" container...
+elif [[ "$1" == "psql" ]]; then
+  [[ "${EXEC}" != "yes" ]] && sail_is_not_running
+
+  shift 1
+  ARGS+=(exec)
+  [[ ! -t 0 ]] && ARGS+=(-T)
+  ARGS+=(pgsql bash -c)
+  ARGS+=("PGPASSWORD=\${PGPASSWORD} psql -U \${POSTGRES_USER} \${POSTGRES_DB}")
+
+# Initiate a Bash shell within the application container...
+elif [[ "$1" == "shell" ]] || [[ "$1" == "bash" ]]; then
+  [[ "${EXEC}" != "yes" ]] && sail_is_not_running
+
+  shift 1
+  ARGS+=(exec -u "${SAIL_USER}")
+  [[ ! -t 0 ]] && ARGS+=(-T)
+  ARGS+=("${APP_SERVICE}" bash)
+
+# Initiate a root user Bash shell within the application container...
+elif [[ "$1" == "root-shell" ]] || [[ "$1" == "root-bash" ]]; then
+  [[ "${EXEC}" != "yes" ]] && sail_is_not_running
+
+  shift 1
+  ARGS+=(exec)
+  [[ ! -t 0 ]] && ARGS+=(-T)
+  ARGS+=("${APP_SERVICE}" bash)
+
+# Initiate a Redis CLI terminal session within the "redis" container...
+elif [[ "$1" == "redis" ]] ; then
+  [[ "${EXEC}" != "yes" ]] && sail_is_not_running
+
+  shift 1
+  ARGS+=(exec)
+  [[ ! -t 0 ]] && ARGS+=(-T)
+  ARGS+=(redis redis-cli)
+
+# Share the site...
+elif [[ "$1" == "share" ]]; then
+  [[ "${EXEC}" != "yes" ]] && sail_is_not_running
+
+  shift 1
+  docker run --init --rm -p "${SAIL_SHARE_DASHBOARD}":4040 -t beyondcodegmbh/expose-server:latest share http://host.docker.internal:"${APP_PORT}" \
+    --server-host="${SAIL_SHARE_SERVER_HOST}" \
+    --server-port="${SAIL_SHARE_SERVER_PORT}" \
+    --auth="${SAIL_SHARE_TOKEN}" \
+    --server="${SAIL_SHARE_SERVER}" \
+    --subdomain="${SAIL_SHARE_SUBDOMAIN}" \
+    --domain="${SAIL_SHARE_DOMAIN}" \
+    "$@"
+  exit
+
+# Open the site...
+elif [[ "$1" == "open" ]]; then
+  [[ "${EXEC}" != "yes" ]] && sail_is_not_running
+
+  shift 1
+  if command -v open &>/dev/null; then
+    OPEN="open"
+  elif command -v xdg-open &>/dev/null; then
+    OPEN="xdg-open"
+  else
+    echo "Neither open nor xdg-open is available. Exiting."
+    exit
+  fi
+  if [[ -n "${APP_PORT}" && "${APP_PORT}" != "80" ]]; then
+    FULL_URL="${APP_URL}:${APP_PORT}"
+  else
+    FULL_URL="${APP_URL}"
+  fi
+  ${OPEN} "${FULL_URL}"
+  exit
+
+fi
+
+## BUILD BASE-IMAGE ########################################
+BASE_BUILD_FLAG=0
+BASE_DOWN_FLAG=0
+BASE_ARGS=()
+
+## Argument Validation function.
+# Usage: base_validation "$@";
+function base_validation() {
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      down|stop)
+        BASE_DOWN_FLAG=1
+        shift ;;
+      build)
+        BASE_BUILD_FLAG=1
+        shift ;;
+      --no-cache|--no-cache=true)
+        BASE_ARGS+=("--no-cache")
+        shift ;;
+      --memory=*)
+        local memory="$(echo $1 | sed -e 's/^[^=]*=//g')"
+        if [[ -n "${memory}" ]]; then
+          BASE_ARGS+=("--memory=${memory}")
+        else
+          BASE_ARGS+=("--memory=512M")
+        fi
+        shift ;;
+      --progress=*)
+        local progress="$(echo $1 | sed -e 's/^[^=]*=//g')"
+        if [[ -n "${progress}" ]]; then
+          BASE_ARGS+=("--progress=${progress}")
+        else
+          BASE_ARGS+=("--progress=auto")
+        fi
+        shift ;;
+      *)
+        shift ;;
+    esac
+  done
+
+  # Check Base ENV file exists.
+  if [[ ! -f "${BASE_ENV_FILE}" ]]; then
+    display_error "Base ENV '${BASE_ENV_FILE//${PWD_ROOT}/}' file does not exist!"
+  fi
+}
+base_validation "$@"
+
+# Get JV BASE from "/docker/base/.env".
+ENV_BASE_IMAGE_NAME="$(grep '^JV_BASE_IMAGE_NAME' ${BASE_ENV_FILE} | sed -e 's/^[^=]*=//g' | xargs)"
+
+# Check Base-Image Repository.
+BASE_IMAGE_REPO="$(echo ${ENV_BASE_IMAGE_NAME}| cut -d':' -f 1)"
+if [[ -z "${BASE_IMAGE_REPO}" ]]; then
+  display_error "Base-Image undefined! (Let's define the variable 'JV_BASE_IMAGE_NAME' in the file '${BASE_ENV_FILE//${PWD_ROOT}/}')!"
+fi
+
+# Check Base-Image tag.
+BASE_IMAGE_TAG="$(echo ${ENV_BASE_IMAGE_NAME}| cut -d':' -f 2)"
+if [[ -z "${BASE_IMAGE_TAG}" ]]; then
+  BASE_IMAGE_TAG="latest"
+fi
+
+# Set Base-Image name.
+export BASE_IMAGE_NAME="${BASE_IMAGE_REPO}:${BASE_IMAGE_TAG}"
+
+# Force: Set Build Flag based on Down Flag and Base-Image non-existence.
+if [[ ${BASE_DOWN_FLAG} -eq 1 ]]; then
+  BASE_BUILD_FLAG=0
+else
+  if [[ -z "$(docker images -q ${BASE_IMAGE_NAME} 2>/dev/null)" ]]; then
+    BASE_BUILD_FLAG=1
+  fi
+fi
+
+# Build Docker Base-Image.
+if [[ ${BASE_BUILD_FLAG} -eq 1 ]]; then
+  BASE_ARGS_STR="${BASE_ARGS[@]}"
+
+  display_command "bash ${BASE_DOCKER_PWD//${PWD_ROOT}/}/build.sh ${BASE_ARGS_STR//${PWD_ROOT}/} --pull"
+  bash ${BASE_DOCKER_PWD}/build.sh ${BASE_ARGS_STR} --pull
+
+  [[ $? -ne 0 ]] && exit 1
+fi
+## END: BUILD BASE-IMAGE ###################################
+
+# Run Docker Compose with the defined arguments...
+display_info "DOCKER-COMPOSE Execution."
+COMPOSE_DOCKER_STR="${DOCKER_COMPOSE[@]}"
+COMPOSE_ARGS_STR="${ARGS[@]}"
+ORIGIN_ARGS_STR="$@"
+COMPOSE_COMMAND_STR="${COMPOSE_DOCKER_STR} --env-file ${ENV_FILE} ${COMPOSE_ARGS_STR} ${ORIGIN_ARGS_STR}"
+
+display_command "${COMPOSE_COMMAND_STR//${PWD_ROOT}/}"
+${COMPOSE_DOCKER_STR} --env-file ${ENV_FILE} ${COMPOSE_ARGS_STR} ${ORIGIN_ARGS_STR}
+
+## END #########################################################################

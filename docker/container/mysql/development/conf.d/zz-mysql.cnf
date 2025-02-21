@@ -1,0 +1,398 @@
+################################################################################
+# These groups are read by MySQL server.
+# Use it for options that only the server (but not clients) should see
+################################################################################
+
+[mysqld]
+
+#
+# *** Character sets options ***
+#
+
+# MySQL/MariaDB default is Latin1, but in Debian we rather default to the full
+# utf8 4-byte character set. See also client.cnf
+character_set_server = utf8mb4
+collation_server = utf8mb4_general_ci
+
+
+#
+# *** Basic Settings ***
+#
+
+# Full List of SQL Modes: 
+# ALLOW_INVALID_DATES, ANSI_QUOTES, ERROR_FOR_DIVISION_BY_ZERO, HIGH_NOT_PRECEDENCE, IGNORE_SPACE, NO_AUTO_VALUE_ON_ZERO, NO_BACKSLASH_ESCAPES
+# NO_DIR_IN_CREATE, NO_ENGINE_SUBSTITUTION, NO_UNSIGNED_SUBTRACTION, NO_ZERO_DATE, NO_ZERO_IN_DATE, ONLY_FULL_GROUP_BY
+# PAD_CHAR_TO_FULL_LENGTH, PIPES_AS_CONCAT, REAL_AS_FLOAT, STRICT_ALL_TABLES, STRICT_TRANS_TABLES, TIME_TRUNCATE_FRACTIONAL
+#
+# Default: 
+# ERROR_FOR_DIVISION_BY_ZERO, NO_ENGINE_SUBSTITUTION, NO_ZERO_DATE, NO_ZERO_IN_DATE, ONLY_FULL_GROUP_BY, STRICT_TRANS_TABLES
+sql_mode = "NO_ENGINE_SUBSTITUTION"
+
+# Don't resolve hostnames. All hostnames are IP's or 'localhost'.
+# Options: ON | OFF
+skip_name_resolve = OFF
+
+# Don't allow connection with TCP/IP.
+# Options: ON | OFF
+skip_networking = OFF
+
+# Don't allow 'SHOW DATABASE' commands.
+# Options: ON | OFF
+skip_show_database = OFF
+
+# Instead of skip-networking the default is now to listen only on
+# localhost which is more compatible and is not less secure.
+bind_address = 0.0.0.0
+
+# back_log is the number of connections the operating system can keep in the listen queue,
+# before the MySQL/MariaDB connection manager thread has processed them
+back_log = 50
+
+# Maximum number of concurrent client connections allowed.
+# The default value is 151.
+max_connections = 1024
+
+# The Maximum simultaneous connections permitted for each user account.
+max_user_connections = 512
+
+# The Maximum amount of errors allowed per host, the server blocks that host from further connections.
+# The default value is 100.
+max_connect_errors = 100
+
+# The execution timeout for SELECT statements, in milliseconds. If the value is 0, timeouts are not enabled.
+### (MYSQL ONLY - MARIADB NOT SUPPORTED)
+max_execution_time = 0
+
+# The number of seconds that the mysqld server waits for a connect packet before responding with Bad handshake.
+# The default value is 10 (seconds).
+### (MYSQL ONLY - MARIADB NOT SUPPORTED)
+connect_timeout = 30
+
+# The number of open tables for all threads.
+table_open_cache = 2048
+
+# Skip enable external file level locking.
+# Options: ON | OFF
+skip_external_locking = ON
+
+# The maximum size of a query packet the server can handle as well as maximum query size server can process.
+# The default is 64MB.
+max_allowed_packet = 1G
+
+# The size of the cache to hold the SQL statements for the binary log during a transaction.
+binlog_cache_size = 1M
+
+# Maximum allowed size for a single HEAP (in memory) table.
+# The default is 16MB.
+max_heap_table_size = 64M
+
+# Size of the buffer used for doing full table scans.
+# Allocated per thread, if a full scan is needed.
+read_buffer_size = 2M
+
+# When reading rows in sorted order after a sort, the rows are read through this buffer to avoid disk seeks.
+# Allocated per thread, when needed.
+read_rnd_buffer_size = 16M
+
+# Sort buffer is used to perform sorts for some ORDER BY and GROUP BY queries.
+# Allocated per thread if sort is needed.
+sort_buffer_size = 8M
+
+# This buffer is used for the optimization of full JOINs (JOINs without indexes).
+# Allocated per thread if full join is found
+join_buffer_size = 8M
+
+# How many threads we should keep in a cache for reuse.
+# When a client disconnects, the client's threads are put in the cache if there aren't more than thread_cache_size threads from before.
+# This greatly reduces the amount of thread creations needed if you have a lot of new connections.
+thread_cache_size = 8
+
+# Query cache is used to cache SELECT results and later return them without actual executing the same query once again.
+### (MARIADB ONLY - MYSQL DEPRECATED FROM VERSION 5.7.20 - REMOVED FROM VERSION 8.0.0)
+#query_cache_size = 64M
+
+# Only cache result sets that are smaller than this limit.
+### (MARIADB ONLY - MYSQL REMOVED FROM VERSION 8.0.3)
+#query_cache_limit = 2M
+
+# Minimum word length to be indexed by the full text search index.
+ft_min_word_len = 4
+
+# Table type which is used by default when creating new tables, if not specified differently during the CREATE TABLE statement.
+default_storage_engine = InnoDB
+
+# Thread stack size to use. This amount of memory is always reserved at connection time.
+thread_stack = 256K
+
+# Maximum size for internal (in-memory) temporary tables.
+tmp_table_size = 64M
+
+
+#
+# *** Logging options ***
+#
+
+# Enable binary logging. This is required for acting as a MASTER in a replication configuration.
+# You also need the binary log if you need the ability to do point in time recovery from your latest backup.
+log_bin = mysql-bin
+server-id = 1
+
+# binary logging format - mixed recommended
+binlog_format = mixed
+
+# If the binary log exceeds this size after a write, the server rotates it by closing it and opening a new binary log.
+max_binlog_size = 128M
+
+# Number of days after which the binary log can be automatically removed.
+# The default is 30.
+### (MARIADB ONLY - MYSQL REMOVED FROM VERSION 8.0.3)
+#expire_logs_days = 30
+
+# The log_warnings system variable specifies the verbosity for handling events intended for the error log.
+# https://mariadb.com/kb/en/server-system-variables/#log_warnings
+# Options:
+#   0: Disables additional warning logging.
+# >=1: Event scheduler information.
+# >=2: Access denied errors.
+# >=3: All errors and warnings during MyISAM repair and auto recover.
+# >=4: Connections aborted | closed.
+# >=9: Information about initializing plugins.
+### (MARIADB ONLY - MYSQL CHANGED TO 'log_error_verbosity' FROM VERSION 5.7.2)
+#log_warnings = 2
+
+# The log_error_verbosity system variable specifies the verbosity for handling events intended for the error log.
+# https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_log_error_verbosity
+# If log_filter_internal is disabled, log_error_verbosity has no effect.
+# Options:
+# 1: log_warnings  = 0  => ERROR 
+# 2: log_warnings  = 1  => ERROR, WARNING 
+# 3: log_warnings >= 2  => ERROR, WARNING, INFORMATION 
+### (MYSQL ONLY - MARIADB NOT SUPPORTED)
+log_error_verbosity = 2
+
+# How the output for the general query log and the slow query log is stored.
+# Options: TABLE | FILE | NONE
+log_output = FILE
+
+# Recommend only changing this at runtime for short testing periods if needed.
+# The value can be 0 (or OFF) to disable the log or 1 (or ON) to enable the log.
+# Options: ON | OFF
+general_log = OFF
+general_log_file = /var/log/mysql/mysql-general.log
+
+# Specifies the name of the error log.
+log_error = /var/log/mysql/mysql-error.log
+
+# Enable the slow query log to see queries with especially long duration.
+# slow_query_log :     Slow queries are queries which take more than the amount of time defined in "long_query_time" or which do not use indexes well, if log_short_format is not enabled.
+# long_query_time:     All queries taking more than this amount of time (in seconds) will be treated as slow.
+# slow_query_log_file: Name of the slow query log file.
+### (MYSQL AND MARIADB BEFORE VERSION 10.11.0)
+slow_query_log = ON
+slow_query_log_file = /var/log/mysql/mysql-slow.log
+long_query_time = 5
+### (MARIADB ONLY FROM VERSION 10.11.0 - MYSQL NOT SUPPORTED)
+#log_slow_query = ON
+#log_slow_query_file = /var/log/mysql/mysql-slow.log
+#log_slow_query_time = 5
+
+# Verbosity level for the slow log.
+# Options: innodb | query_plan | explain
+### (MARIADB ONLY - MYSQL NOT SUPPORTED)
+#log_slow_verbosity = query_plan
+
+# Queries that don't use an index, or that perform a full index scan where the index doesn't limit the number of rows, will be logged to the slow query log.
+# Options: ON | OFF
+log_queries_not_using_indexes = OFF
+
+
+#
+# *** MyISAM Specific options ***
+#
+
+# Size of the Key Buffer, used to cache index blocks for MyISAM tables.
+# Do not set it larger than 30% of your available memory, as some memory is also required by the OS to cache rows.
+key_buffer_size = 128M
+
+# MyISAM uses special tree-like cache to make bulk inserts faster.
+# This variable limits the size of the cache tree in bytes per thread.
+# Setting it to 0 will disable this optimisation.
+# Do not set it larger than "key_buffer_size" for optimal performance.
+# This buffer is allocated when a bulk insert is detected.
+bulk_insert_buffer_size = 16M
+
+# This buffer is allocated when MySQL/MariaDB needs to rebuild the index in REPAIR, OPTIMIZE, ALTER table statements as well as in LOAD DATA INFILE into an empty table.
+# It is allocated per thread so be careful with large settings.
+myisam_sort_buffer_size = 128M
+
+# The maximum size of the temporary file MySQL/MariaDB is allowed to use while recreating the index (during REPAIR, ALTER TABLE or LOAD DATA INFILE.
+myisam_max_sort_file_size = 10G
+
+# If a table has more than one index, MyISAM can use more than one thread to repair them by sorting in parallel.
+### (MARIADB ONLY - MYSQL REMOVED FROM VERSION 5.7.39)
+#myisam_repair_threads = 1
+
+# Automatically check and repair not properly closed MyISAM tables.
+myisam_recover_options = BACKUP,QUICK,FORCE
+
+
+#
+# *** INNODB Specific options ***
+#
+
+# Use this option if you have a MySQL/MariaDB server with InnoDB support enabled but you do not plan to use it.
+#skip-innodb
+
+# The size in bytes of the buffer pool, the memory area where InnoDB caches table and index data.
+# Read the manual for more InnoDB related options. There are many!
+# Most important is to give InnoDB 80 % of the system RAM for buffer use:
+# https://mariadb.com/kb/en/innodb-system-variables/#innodb_buffer_pool_size
+# https://dev.mysql.com/doc/refman/8.0/en/innodb-parameters.html#sysvar_innodb_buffer_pool_size
+# The default value is 134217728 bytes (128MB).
+innodb_buffer_pool_size = 1G
+
+# Size of the sort buffers used for sorting data when an InnoDB index is created,
+# as well as the amount by which the temporary log file is extended during online DDL operations to record concurrent writes.
+innodb_sort_buffer_size = 8M
+
+# InnoDB stores data in one or more data files forming the tablespace.
+innodb_data_file_path = ibdata1:12M:autoextend:max:1G
+innodb_temp_data_file_path = ibtmp1:12M:autoextend:max:1G
+
+# Set this option if you would like the InnoDB tablespace files to be stored in another location.
+# By default this is the MySQL/MariaDB datadir.
+#innodb_data_home_dir = <directory>
+
+# Number of IO threads to use for async IO operations.
+# This value is hardcoded to 8 on Unix, but on Windows disk I/O may benefit from a larger number.
+innodb_read_io_threads = 8
+innodb_write_io_threads = 8
+
+# If you run into InnoDB tablespace corruption, setting this to a nonzero  value will likely help you to dump your tables.
+# Start from value 1 and  increase it until you're able to dump the table successfully.
+innodb_force_recovery = 0
+
+# If set to 1, InnoDB will flush (fsync) the transaction logs to the disk at each commit, which offers full ACID behavior.
+# Value 0 means that the log is only written to the log file and the log file flushed to disk approximately once per second.
+# Value 2 means the log is written to the log file at each commit, but the log file is only flushed to disk approximately once per second.
+innodb_flush_log_at_trx_commit = 1
+
+# Speed up InnoDB shutdown.
+# This will disable InnoDB to do a full purge and insert buffer merge on shutdown.
+# It may increase shutdown time a lot, but InnoDB will have to do it on the next startup instead.
+innodb_fast_shutdown = 1
+
+# The size of the buffer InnoDB uses for buffering log data.
+innodb_log_buffer_size = 64M
+
+# The length of time in seconds an InnoDB transaction waits for a row lock before giving up.
+# The default value is 50 (seconds).
+innodb_lock_wait_timeout = 120
+
+
+#
+# *** Expand more options ***
+#
+
+# String containing one or more SQL statements, separated by semicolons, that will be executed by the server for each client connecting.
+init_connect = 'SET NAMES utf8mb4;'
+
+# Status of the Event Scheduler.
+event_scheduler = OFF
+
+# Specifies the maximum number of messages stored for display by SHOW ERRORS and SHOW WARNINGS statements.
+max_error_count = 100
+
+# This option causes CREATE TABLE to create all TIMESTAMP columns as NULL with the DEFAULT NULL attribute,
+# Without this option, TIMESTAMP columns are NOT NULL and have implicit DEFAULT clauses.
+explicit_defaults_for_timestamp = ON
+
+# In systemd managed systems like Ubuntu 16.04 or CentOS 7, you need to perform an extra action for table_open_cache & open_files_limit
+# to be override (also see comment next to open_files_limit).
+# and for MariaDB check: https://mariadb.com/kb/en/library/systemd/
+# and for MySQL check: https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html#sysvar_open_files_limit
+# If set to 0, then MariaDB will calculate a limit based on the following:
+# MAX(max_connections*5, max_connections +table_open_cache*2)
+# If set to 0, then Mysql will calculate a limit based on the following:
+# 10 + max_connections + (table_open_cache * 2)
+open_files_limit = 65536
+
+
+################################################################################
+# This group is read by the client library
+# Use it for options that affect all clients, but not the server
+################################################################################
+
+[client]
+default-character-set = utf8mb4
+
+
+################################################################################
+# These groups are read by MySQL/MariaDB command-line tools
+# Use it for options that affect only one utility
+################################################################################
+
+[mysql]
+no-auto-rehash
+default-character-set = utf8mb4
+
+
+[mysql_upgrade]
+
+
+[mysqladmin]
+
+
+[mysqlbinlog]
+
+
+[mysqlcheck]
+
+
+[mysqldump]
+quick
+quote-names
+max_allowed_packet = 512M
+default-character-set = utf8mb4
+
+
+[mysqlimport]
+
+
+[mysqlshow]
+
+
+[mysqlslap]
+
+
+[myisamchk]
+key_buffer_size = 8M
+sort_buffer_size = 16M
+read_buffer = 8M
+write_buffer = 8M
+
+
+[mysqlhotcopy]
+interactive-timeout
+
+
+################################################################################
+# This group is read only by the traditional SYSV init script, not system.
+# MySQL/MariaDB system does not utilize mysqld_safe nor read this file.
+################################################################################
+
+[mysqld_safe]
+nice = 0
+skip_log_error
+syslog
+
+# Increase the amount of open files allowed per process.
+open_files_limit = 65536
+
+
+# https://dev.mysql.com/doc/refman/8.4/en/option-files.html
+[mysqld-8.4]
+
+# Enable mysql_native_password plugin
+# Note this plugin is removed in MySQL 9.0
+mysql_native_password=ON

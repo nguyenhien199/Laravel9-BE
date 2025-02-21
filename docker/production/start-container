@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+
+# Change Timezone.
+if [[ -n "${TZ}" ]]; then
+  # Config timezone.
+  if [[ -f "/usr/share/zoneinfo/${TZ}" ]]; then
+    ln -snf "/usr/share/zoneinfo/${TZ}" /etc/localtime && echo "${TZ}" > /etc/timezone
+  fi
+  # Change default timezone.
+  if [[ -f "${PHP_INI_DIR}/conf.d/zz-php.ini" ]]; then
+    sed -i "s|date.timezone=UTC|date.timezone=${TZ}|i" "${PHP_INI_DIR}/conf.d/zz-php.ini"
+  fi
+  # Reconfigure tzdata.
+  dpkg-reconfigure tzdata;
+fi
+
+# To Work directory.
+cd /var/www/html
+
+## PROJECT #################################################
+# Chmod code folder.
+chown -R www-data:www-data ./* 2>/dev/null
+chmod -R 777 ./storage ./bootstrap/cache
+
+# Import ENV config.
+if [[ -f ./import_env.php ]]; then
+  php ./import_env.php
+  chown www-data:www-data ./.env
+fi
+
+# Generate Storage link.
+php artisan storage:link --force
+chown -R www-data:www-data ./public
+
+# Generate L5-Swagger.
+php artisan l5-swagger:generate --all
+chown -R www-data:www-data ./storage/api-docs
+
+# Execute database migration.
+php artisan migrate --force
+
+# Laravel Optimize cache.
+php artisan optimize:clear
+php artisan config:cache
+php artisan event:cache
+php artisan route:cache
+php artisan view:cache
+
+# TODO: add step to here
+
+# Fixes: Failed to open stream: Permission denied.
+chmod -R 777 ./storage ./bootstrap/cache
+chown -R www-data:www-data ./storage ./bootstrap/cache
+## END: PROJECT ############################################
+
+## Logrotate configuration.
+if [[ -x /usr/sbin/logrotate ]]; then
+  # Display messages during rotation.
+  [[ ! -f /var/lib/logrotate/status ]] || touch /var/lib/logrotate/status
+  /usr/sbin/logrotate /etc/logrotate.conf -s /var/lib/logrotate/status
+  # Change rotation time.
+  DATE_YESTERDAY="$(date -d 'yesterday' +%Y-%-m-%-d)"
+  DATE_CURRENT="$(date -d 'now' +%Y-%-m-%-d)"
+  sed -i "s|${DATE_CURRENT}|${DATE_YESTERDAY}|i" /var/lib/logrotate/status
+fi
+## Start Crontab.
+if [[ -x /usr/sbin/cron ]]; then
+  /usr/sbin/cron
+fi
+
+## Supervisord turn ON/OFF services.
+SUV_CONFD_DIR='/etc/supervisor/conf.d'
+SUV_SCHEDULER_FILE="${SUV_CONFD_DIR}/400-scheduler.conf"
+if [[ -f "${SUV_SCHEDULER_FILE}" ]] && [[ "${SUV_SCHEDULER:-false}" == 'true' ]]; then
+  sed -i "s|numprocs=0|numprocs=${SUV_SCHEDULER_NUMPROCS:-1}|i" "${SUV_SCHEDULER_FILE}"
+fi
+SUV_WORKER_FILE="${SUV_CONFD_DIR}/400-worker.conf"
+if [[ -f "${SUV_WORKER_FILE}" ]] && [[ "${SUV_WORKER:-false}" == 'true' ]]; then
+  sed -i "s|numprocs=0|numprocs=${SUV_WORKER_NUMPROCS:-1}|i" "${SUV_WORKER_FILE}"
+fi
+SUV_WEB_SERVER_FILE="${SUV_CONFD_DIR}/600-nginx.conf"
+if [[ -f "${SUV_WEB_SERVER_FILE}" ]] && [[ "${SUV_WEB_SERVER:-true}" == 'true' ]]; then
+  sed -i "s|numprocs=0|numprocs=1|i" "${SUV_WEB_SERVER_FILE}"
+fi
+# Start Supervisord with config.
+exec /usr/bin/supervisord -c /etc/supervisor/supervisord.conf

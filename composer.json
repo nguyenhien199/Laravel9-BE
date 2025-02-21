@@ -1,0 +1,128 @@
+{
+    "name": "laravel/laravel",
+    "type": "project",
+    "description": "The Laravel 9 Boilerplate Application.",
+    "keywords": ["laravel", "framework", "boilerplate"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Taylor Otwell",
+            "email": "taylor@laravel.com"
+        },
+        {
+            "name": "ThuyVu",
+            "email": "thuyvv.hn@gmail.com"
+        }
+    ],
+    "require": {
+        "php": "^8.1",
+        "ext-iconv": "*",
+        "ext-intl": "*",
+        "ext-json": "*",
+        "ext-mbstring": "*",
+        "ext-zend-opcache": "*",
+        "amnuts/opcache-gui": "^3.5",
+        "bensampo/laravel-enum": "^6.11",
+        "darkaonline/l5-swagger": "^8.6",
+        "guzzlehttp/guzzle": "^7.9",
+        "laravel/framework": "^9.52",
+        "laravel/tinker": "^2.10",
+        "opcodesio/log-viewer": "^3.12",
+        "spatie/laravel-activitylog": "^4.9",
+        "spatie/laravel-collection-macros": "^7.12",
+        "spatie/laravel-data": "^3.12",
+        "spatie/laravel-sitemap": "^6.4|^7.0",
+        "torann/geoip": "^3.0",
+        "universe/laravel-dbquery-log": "^1.0",
+        "universe/laravel-jwt-auth": "^1.0",
+        "universe/laravel-request-log": "^1.0",
+        "universe/laravel-timezone": "^1.0"
+    },
+    "require-dev": {
+        "barryvdh/laravel-debugbar": "^3.14",
+        "barryvdh/laravel-ide-helper": "^2.15",
+        "fakerphp/faker": "^1.24",
+        "laravel/pint": "^1.5",
+        "laravel/telescope": "^5.2",
+        "mockery/mockery": "^1.6",
+        "nunomaduro/collision": "^6.4",
+        "phpunit/phpunit": "^9.6|^10.0",
+        "spatie/laravel-ignition": "^1.7"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/",
+            "Database\\Factories\\": "database/factories/",
+            "Database\\Seeders\\": "database/seeders/"
+        },
+        "files": [
+            "bootstrap/constants/autoload.php"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "post-autoload-dump": [
+            "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
+            "@php artisan package:discover --ansi"
+        ],
+        "post-update-cmd": [
+            "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
+        ],
+        "post-root-package-install": [
+            "@php -r \"file_exists('.env') || file_exists('.env-local.env') && copy('.env-local.env', '.env');\""
+        ],
+        "post-create-project-cmd": [
+            "@php artisan key:generate --ansi"
+        ],
+        "swagger-generate": [
+            "@php artisan l5-swagger:generate --all"
+        ],
+        "clear-all": [
+            "@php artisan clear-compiled",
+            "@php artisan cache:clear",
+            "@php artisan config:clear",
+            "@php artisan event:clear",
+            "@php artisan route:clear",
+            "@php artisan view:clear",
+            "composer dumpautoload -o"
+        ],
+        "cache-all": [
+            "@php artisan config:cache",
+            "@php artisan event:cache",
+            "@php artisan route:cache",
+            "@php artisan view:cache"
+        ]
+    },
+    "extra": {
+        "laravel": {
+            "dont-discover": [
+                "laravel/telescope"                
+            ]
+        }
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true,
+            "php-http/discovery": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "repositories": [
+        {
+            "type": "path",
+            "url": "./packages/*/*",
+            "options": {
+                "reference": "auto",
+                "symlink": true
+            }
+        }
+    ]
+}

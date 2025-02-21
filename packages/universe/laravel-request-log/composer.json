@@ -1,0 +1,44 @@
+{
+    "name": "universe/laravel-request-log",
+    "license": "MIT",
+    "description": "Request log for Laravel",
+    "keywords": ["laravel", "request-log"],
+    "version": "1.1.0",
+    "authors": [
+        {
+            "name": "ThuyVu",
+            "email": "thuyvv.hn@gmail.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^8.0",
+        "laravel/framework": "^9|^10",
+        "universe/laravel-package-tools": "^1.0"
+    },
+    "require-dev": {},
+    "autoload": {
+        "psr-4": {
+            "Universe\\RequestLog\\": "src/"
+        }
+    },
+    "autoload-dev": {},
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Universe\\RequestLog\\RequestLogServiceProvider"
+            ]
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {}
+    },
+    "scripts": {
+        "pre-package-install": [
+            "@php artisan config:clear"
+        ]
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

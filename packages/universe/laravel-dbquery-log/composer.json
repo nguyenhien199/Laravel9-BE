@@ -1,0 +1,45 @@
+{
+    "name": "universe/laravel-dbquery-log",
+    "license": "MIT",
+    "description": "Database Query log for Laravel",
+    "keywords": ["laravel", "dbquery-log"],
+    "version": "1.1.0",
+    "authors": [
+        {
+            "name": "ThuyVu",
+            "email": "thuyvv.hn@gmail.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^8.0",
+        "laravel/framework": "^9|^10",
+        "nesbot/carbon": "^2.72|^3.0",
+        "universe/laravel-package-tools": "^1.0"
+    },
+    "require-dev": {},
+    "autoload": {
+        "psr-4": {
+            "Universe\\DBQueryLog\\": "src/"
+        }
+    },
+    "autoload-dev": {},
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Universe\\DBQueryLog\\DBQueryLogServiceProvider"
+            ]
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {}
+    },
+    "scripts": {
+        "pre-package-install": [
+            "@php artisan config:clear"
+        ]
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

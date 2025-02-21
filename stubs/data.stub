@@ -1,0 +1,29 @@
+<?php
+
+namespace DummyNamespace;
+
+use App\Http\Resources\Core\BaseResource;
+use Illuminate\Database\Eloquent\Model;
+
+/**
+ * Class DummyClass
+ *
+ * @package DummyNamespace
+ */
+class DummyClass extends BaseResource
+{
+    /**
+     * Format Model field data.
+     *
+     * @param Model $model <p>Model instance.</p>
+     * @param string $field <p>Model property.</p>
+     * @return array
+     */
+    protected static function formatModelData(Model $model, string $field): array
+    {
+        // TODO: Customize field data
+
+        return parent::formatModelData($model, $field);
+    }
+
+}

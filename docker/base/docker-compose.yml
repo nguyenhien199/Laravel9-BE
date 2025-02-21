@@ -1,0 +1,67 @@
+# For more information
+# https://hub.docker.com/_/php
+# Image Variants: php:{x.y}-fpm
+
+services:
+  php-fpm-base:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+      args:
+        # Version
+        JV_PHP_VERSION: '${JV_PHP_VERSION}'
+        JV_DISTRIBUTION: '${JV_DISTRIBUTION:-}'
+        # Mics
+        JV_INSTALL_CALENDAR: '${JV_INSTALL_CALENDAR:-false}'
+        JV_INSTALL_BCMATH: '${JV_INSTALL_BCMATH:-false}'
+        JV_INSTALL_ZIP: '${JV_INSTALL_ZIP:-false}'
+        JV_INSTALL_BZ2: '${JV_INSTALL_BZ2:-false}'
+        JV_INSTALL_DECIMAL: '${JV_INSTALL_DECIMAL:-false}'
+        JV_INSTALL_INTL: '${JV_INSTALL_INTL:-false}'
+        JV_INSTALL_PCNTL: '${JV_INSTALL_PCNTL:-false}'
+        JV_INSTALL_MCRYPT: '${JV_INSTALL_MCRYPT:-false}'
+        JV_INSTALL_MSGPACK: '${JV_INSTALL_MSGPACK:-false}'
+        JV_INSTALL_IGBINARY: '${JV_INSTALL_IGBINARY:-false}'
+        JV_INSTALL_GNUPG: '${JV_INSTALL_GNUPG:-false}'
+        JV_INSTALL_YAML: '${JV_INSTALL_YAML:-false}'
+        JV_INSTALL_XSL: '${JV_INSTALL_XSL:-false}'
+        JV_INSTALL_XLSWRITER: '${JV_INSTALL_XLSWRITER:-false}'
+        JV_INSTALL_OPCACHE: '${JV_INSTALL_OPCACHE:-false}'
+        JV_INSTALL_MEMCACHED: '${JV_INSTALL_MEMCACHED:-false}'
+        JV_INSTALL_IMAP: '${JV_INSTALL_IMAP:-false}'
+        JV_INSTALL_LDAP: '${JV_INSTALL_LDAP:-false}'
+        JV_INSTALL_SOAP: '${JV_INSTALL_SOAP:-false}'
+        JV_INSTALL_SOCKET: '${JV_INSTALL_SOCKET:-false}'
+        JV_INSTALL_SSH2: '${JV_INSTALL_SSH2:-false}'
+        JV_INSTALL_GD: '${JV_INSTALL_GD:-false}'
+        JV_INSTALL_EXIF: '${JV_INSTALL_EXIF:-false}'
+        JV_INSTALL_IMAGICK: '${JV_INSTALL_IMAGICK:-false}'
+        JV_INSTALL_MYSQL: '${JV_INSTALL_MYSQL:-false}'
+        JV_INSTALL_PGSQL: '${JV_INSTALL_PGSQL:-false}'
+        JV_INSTALL_MONGODB: '${JV_INSTALL_MONGODB:-false}'
+        JV_INSTALL_MSSQL: '${JV_INSTALL_MSSQL:-false}'
+        JV_INSTALL_SQLSRV: '${JV_INSTALL_SQLSRV:-false}'
+        JV_INSTALL_OCI8: '${JV_INSTALL_OCI8:-false}'
+        JV_INSTALL_REDIS: '${JV_INSTALL_REDIS:-false}'
+        JV_INSTALL_AMQP: '${JV_INSTALL_AMQP:-false}'
+        JV_INSTALL_EVENT: '${JV_INSTALL_EVENT:-false}'
+        # XDebug
+        JV_INSTALL_XDEBUG: '${JV_INSTALL_XDEBUG:-false}'
+        # PHPUnit
+        JV_INSTALL_PHPUNIT: '${JV_INSTALL_PHPUNIT:-false}'
+        # Composer
+        JV_INSTALL_COMPOSER: '${JV_INSTALL_COMPOSER:-false}'
+        # NodeJS
+        JV_INSTALL_NODEJS: '${JV_INSTALL_NODEJS:-false}'
+        JV_NODEJS_VERSION: '${JV_NODEJS_VERSION:-22}'
+        # Yarn
+        JV_INSTALL_YARN: '${JV_INSTALL_YARN:-false}'
+        JV_YARN_VERSION_ONE: '${JV_YARN_VERSION_ONE:-false}'
+        # Bower
+        JV_INSTALL_BOWER: '${JV_INSTALL_BOWER:-false}'
+        # Sass
+        JV_INSTALL_SASS: '${JV_INSTALL_SASS:-false}'
+        #
+    image: '${JV_BASE_IMAGE_NAME:-base:latest}'
+    environment:
+      TZ: '${TZ:-UTC}'
